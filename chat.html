@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat - {{ username|capitalize }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var username = "{{ username }}";
+            var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            socket.on('message', function(data) {
+                var chatBox = document.getElementById('chat-box');
+                var newMessage = document.createElement('div');
+                newMessage.classList.add('message', data.sender);
+
+                var img = document.createElement('img');
+                img.src = data.sender === 'user1' ? "{{ url_for('static', filename='user1.jpg') }}" : "{{ url_for('static', filename='user2.jpg') }}";
+                img.classList.add('profile-img');
+
+                var text = document.createElement('span');
+                text.textContent = (data.sender === username ? 'You' : (username === 'user1' ? 'User 2' : 'User 1')) + ': ' + data.msg;
+
+                newMessage.appendChild(img);
+                newMessage.appendChild(text);
+                chatBox.appendChild(newMessage);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+
+            function sendMessage() {
+                var input = document.getElementById('chat-input');
+                if(input.value.trim() !== '') {
+                    socket.emit('message', {'msg': input.value, 'sender': username});
+                    input.value = '';
+                }
+            }
+
+            document.getElementById('chat-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div id="chat-box"></div>
+    <input type="text" id="chat-input" placeholder="Type your message here..." autofocus>
+    <button onclick="sendMessage()">Send</button>
+</body>
+</html>
